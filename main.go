@@ -18,26 +18,30 @@ package main
 import (
 	"os"
 
+	"github.com/edgexfoundry/go-mod-core-contracts/clients/logger"
+	"github.com/edgexfoundry/go-mod-core-contracts/models"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
 
 func main() {
+	LoggingClient := logger.NewClient("mongo-init", false, "mongo-init.log", models.DebugLog)
+
 	url := "localhost:27017"
+
 	session, err := mgo.Dial(url)
 	if err != nil {
-		println("Fatal error during execution: " + err.Error())
+		LoggingClient.Error("Fatal error during execution: " + err.Error())
 		os.Exit(1)
 	}
 
-	//db=db.getSiblingDB('admin')
-	//db=db.getSiblingDB('authorization')
+	defer session.Close()
+
 	db := mgo.Database{
 		Session: session,
 		Name:    "authorization",
 	}
 
-	//db.createUser({ user: "admin",pwd: "password",roles: [ { role: "readWrite", db: "authorization" } ]});
 	err = db.UpsertUser(&mgo.User{
 		Username: "admin",
 		Password: "password",
@@ -46,110 +50,76 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	////Create keystore collection
-	//db.createCollection("keyStore");
-	//keyStore := mgo.Collection{
-	//	Database: &db,
-	//	Name: "keyStore",
-	//	FullName: "db.keyStore",
-	//}
-	//db.keyStore.insert( { xDellAuthKey: "x-dell-auth-key", secretKey: "EDGEX_SECRET_KEY" } );
 	err = db.C("keystore").Insert(bson.D{
-		{"xDellAuthKey", "x-dell-auth-key"},
-		{"secretKey", "EDGEX_SECRET_KEY"}})
+		{Name: "xDellAuthKey", Value: "x-dell-auth-key"},
+		{Name: "secretKey", Value: "EDGEX_SECRET_KEY"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	////Create Service Mapping
-	//db.createCollection("serviceMapping");
-	//db.serviceMapping.insert( { serviceName: "coredata", serviceUrl: "http://localhost:48080/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "coredata"},
-		{"serviceUrl", "http://localhost:48080/"}})
+		{Name: "serviceName", Value: "coredata"},
+		{Name: "serviceUrl", Value: "http://localhost:48080/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.serviceMapping.insert( { serviceName: "metadata", serviceUrl: "http://localhost:48081/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "metadata"},
-		{"serviceUrl", "http://localhost:48081/"}})
+		{Name: "serviceName", Value: "metadata"},
+		{Name: "serviceUrl", Value: "http://localhost:48081/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.serviceMapping.insert( { serviceName: "command", serviceUrl: "http://localhost:48082/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "command"},
-		{"serviceUrl", "http://localhost:48082/"}})
+		{Name: "serviceName", Value: "command"},
+		{Name: "serviceUrl", Value: "http://localhost:48082/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.serviceMapping.insert( { serviceName: "rules", serviceUrl: "http://localhost:48084/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "rules"},
-		{"serviceUrl", "http://localhost:48084/"}})
+		{Name: "serviceName", Value: "rules"},
+		{Name: "serviceUrl", Value: "http://localhost:48084/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.serviceMapping.insert( { serviceName: "notifications", serviceUrl: "http://localhost:48060/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "notifications"},
-		{"serviceUrl", "http://localhost:48060/"}})
+		{Name: "serviceName", Value: "notifications"},
+		{Name: "serviceUrl", Value: "http://localhost:48060/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.serviceMapping.insert( { serviceName: "logging", serviceUrl: "http://localhost:48061/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "logging"},
-		{"serviceUrl", "http://localhost:48061/"}})
+		{Name: "serviceName", Value: "logging"},
+		{Name: "serviceUrl", Value: "http://localhost:48061/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.serviceMapping.insert( { serviceName: "export-client", serviceUrl: "http://localhost:48071/" });
 	err = db.C("serviceMapping").Insert(bson.D{
-		{"serviceName", "export-client"},
-		{"serviceUrl", "http://localhost:48071/"}})
+		{Name: "serviceName", Value: "export-client"},
+		{Name: "serviceUrl", Value: "http://localhost:48071/"}})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	//
-	//db=db.getSiblingDB('admin')
 	db = mgo.Database{
 		Session: session,
 		Name:    "admin",
 	}
 
-	//db.system.users.remove({});
-	err = db.C("system.users").DropCollection()
+	_, err = db.C("system.users").RemoveAll(nil)
 	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
-	//db.system.version.remove({});
-	err = db.C("system.version").DropCollection()
-	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
-	//db.system.version.insert({ "_id" : "authSchema", "currentVersion" : 3 });
-	err = db.C("system.users").Insert(bson.D{{
-		"_id", "authSchema"},
-		{"currentVersion", 3}})
-	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	//db=db.getSiblingDB('admin')
+	_, err = db.C("system.version").Upsert(nil, bson.D{
+		{Name: "_id", Value: "authSchema"},
+		{Name: "currentVersion", Value: 3}})
+	if err != nil {
+		LoggingClient.Error("Error during execution: " + err.Error())
+	}
 
-	//db.createUser({ user: "admin",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "admin" }
-	//]
-	//});
-	//
 	err = db.UpsertUser(&mgo.User{
 		Username: "admin",
 		Password: "password",
@@ -158,20 +128,14 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	//db=db.getSiblingDB('metadata')
 	db = mgo.Database{
 		Session: session,
 		Name:    "metadata",
 	}
-	//db.createUser({ user: "meta",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "metadata" }
-	//]
-	//});
+
 	err = db.UpsertUser(&mgo.User{
 		Username: "meta",
 		Password: "password",
@@ -180,23 +144,15 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	//db.createCollection("addressable");
-	addressable := mgo.Collection{
-		Database: &db,
-		Name:     "addressable",
-		FullName: "db.addressable",
-	}
-	err = addressable.Create(&mgo.CollectionInfo{})
-	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
-	//TODO unnecessary?
 	//db.addressable.createIndex({name: 1}, {unique: true});
+	err = db.C("addressable").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
+	if err != nil {
+		LoggingClient.Error("Error during execution: " + err.Error())
+	}
 
-	//db.createCollection("command");
 	command := mgo.Collection{
 		Database: &db,
 		Name:     "command",
@@ -204,117 +160,62 @@ func main() {
 	}
 	err = command.Create(&mgo.CollectionInfo{})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	//db.createCollection("device");
-	device := mgo.Collection{
-		Database: &db,
-		Name:     "device",
-		FullName: "db.device",
-	}
-	err = device.Create(&mgo.CollectionInfo{})
-	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
 	//db.device.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("deviceManager");
-	deviceManager := mgo.Collection{
-		Database: &db,
-		Name:     "deviceManager",
-		FullName: "db.deviceManager",
-	}
-	err = deviceManager.Create(&mgo.CollectionInfo{})
+	err = db.C("device").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
+
 	//db.deviceManager.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("deviceProfile");
-	deviceProfile := mgo.Collection{
-		Database: &db,
-		Name:     "deviceProfile",
-		FullName: "db.deviceProfile",
-	}
-	err = deviceProfile.Create(&mgo.CollectionInfo{})
+	err = db.C("deviceManager").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
+
 	//db.deviceProfile.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("deviceReport");
-	deviceReport := mgo.Collection{
-		Database: &db,
-		Name:     "deviceReport",
-		FullName: "db.deviceReport",
-	}
-	err = deviceReport.Create(&mgo.CollectionInfo{})
+	err = db.C("deviceProfile").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
+
 	//db.deviceReport.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("deviceService");
-	deviceService := mgo.Collection{
-		Database: &db,
-		Name:     "deviceService",
-		FullName: "db.deviceService",
-	}
-	err = deviceService.Create(&mgo.CollectionInfo{})
+	err = db.C("deviceReport").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
+
 	//db.deviceService.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("provisionWatcher");
-	provisionWatcher := mgo.Collection{
-		Database: &db,
-		Name:     "provisionWatcher",
-		FullName: "db.provisionWatcher",
-	}
-	err = provisionWatcher.Create(&mgo.CollectionInfo{})
+	err = db.C("deviceService").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
+
 	//db.provisionWatcher.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("schedule");
-	schedule := mgo.Collection{
-		Database: &db,
-		Name:     "schedule",
-		FullName: "db.schedule",
-	}
-	err = schedule.Create(&mgo.CollectionInfo{})
+	err = db.C("provisionWatcher").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
+
 	//db.schedule.createIndex({name: 1}, {unique: true});
-
-	//db.createCollection("scheduleEvent");
-	scheduleEvent := mgo.Collection{
-		Database: &db,
-		Name:     "scheduleEvent",
-		FullName: "db.scheduleEvent",
-	}
-	err = scheduleEvent.Create(&mgo.CollectionInfo{})
+	err = db.C("schedule").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.scheduleEvent.createIndex({name: 1}, {unique: true});
-	//
 
-	//db=db.getSiblingDB('coredata')
+	//db.scheduleEvent.createIndex({name: 1}, {unique: true});
+	err = db.C("scheduleEvent").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
+	if err != nil {
+		LoggingClient.Error("Error during execution: " + err.Error())
+	}
+
 	db = mgo.Database{
 		Session: session,
 		Name:    "coredata",
 	}
-	//db.createUser({ user: "core",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "coredata" }
-	//]
-	//});
+
 	err = db.UpsertUser(&mgo.User{
 		Username: "core",
 		Password: "password",
@@ -323,58 +224,32 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("event");
-	event := mgo.Collection{
-		Database: &db,
-		Name:     "event",
-		FullName: "db.event",
-	}
-	err = event.Create(&mgo.CollectionInfo{})
-	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
-	//TODO what
+
 	//db.event.createIndex({"device": 1}, {unique: false});
-
-	//db.createCollection("reading");
-	reading := mgo.Collection{
-		Database: &db,
-		Name:     "reading",
-		FullName: "db.reading",
-	}
-	err = reading.Create(&mgo.CollectionInfo{})
+	err = db.C("event").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
 
-	//db.createCollection("valueDescriptor");
-	valueDescriptor := mgo.Collection{
-		Database: &db,
-		Name:     "valueDescriptor",
-		FullName: "db.valueDescriptor",
-	}
-	err = valueDescriptor.Create(&mgo.CollectionInfo{})
-	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
-	//TODO what
 	//db.reading.createIndex({"device": 1}, {unique: false});
-	//db.valueDescriptor.createIndex({name: 1}, {unique: true});
+	err = db.C("reading").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
+	if err != nil {
+		LoggingClient.Error("Error during execution: " + err.Error())
+	}
 
-	//
-	//db=db.getSiblingDB('rules_engine_db')
+	//db.valueDescriptor.createIndex({name: 1}, {unique: true});
+	err = db.C("valueDescriptor").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
+	if err != nil {
+		LoggingClient.Error("Error during execution: " + err.Error())
+	}
+
 	db = mgo.Database{
 		Session: session,
 		Name:    "rules_engine_db",
 	}
-	//db.createUser({ user: "rules_engine_user",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "rules_engine_db" }
-	//]
-	//});
+
 	err = db.UpsertUser(&mgo.User{
 		Username: "rules_engine_user",
 		Password: "password",
@@ -383,20 +258,14 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//
-	//db=db.getSiblingDB('notifications')
+
 	db = mgo.Database{
 		Session: session,
 		Name:    "notifications",
 	}
-	//db.createUser({ user: "notifications",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "notifications" }
-	//]
-	//});
+
 	err = db.UpsertUser(&mgo.User{
 		Username: "notifications",
 		Password: "password",
@@ -405,19 +274,15 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("notification");
-	notification := mgo.Collection{
-		Database: &db,
-		Name:     "notification",
-		FullName: "db.notification",
-	}
-	err = notification.Create(&mgo.CollectionInfo{})
+
+	//db.notification.createIndex({slug: 1}, {unique: true});
+	err = db.C("notification").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("transmission");
+
 	transmission := mgo.Collection{
 		Database: &db,
 		Name:     "transmission",
@@ -425,32 +290,20 @@ func main() {
 	}
 	err = transmission.Create(&mgo.CollectionInfo{})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("subscription");
-	subscription := mgo.Collection{
-		Database: &db,
-		Name:     "subscription",
-		FullName: "db.subscription",
-	}
-	err = subscription.Create(&mgo.CollectionInfo{})
-	if err != nil {
-		println("Error during execution: " + err.Error())
-	}
-	//db.notification.createIndex({slug: 1}, {unique: true});
+
 	//db.subscription.createIndex({slug: 1}, {unique: true});
-	//
-	//db=db.getSiblingDB('scheduler')
+	err = db.C("subscription").EnsureIndex(mgo.Index{Key: []string{"name"}, Name: "name_1", Unique: true})
+	if err != nil {
+		LoggingClient.Error("Error during execution: " + err.Error())
+	}
+
 	db = mgo.Database{
 		Session: session,
 		Name:    "scheduler",
 	}
-	//db.createUser({ user: "scheduler",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "scheduler" }
-	//]
-	//});
+
 	err = db.UpsertUser(&mgo.User{
 		Username: "scheduler",
 		Password: "password",
@@ -459,9 +312,9 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("interval");
+
 	interval := mgo.Collection{
 		Database: &db,
 		Name:     "interval",
@@ -469,9 +322,9 @@ func main() {
 	}
 	err = interval.Create(&mgo.CollectionInfo{})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("intervalAction");
+
 	intervalAction := mgo.Collection{
 		Database: &db,
 		Name:     "intervalAction",
@@ -479,22 +332,14 @@ func main() {
 	}
 	err = intervalAction.Create(&mgo.CollectionInfo{})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.interval.createIndex({name: 1}, {unique: true});
-	//db.intervalAction.createIndex({name: 1}, {unique: true});
-	//
-	//db=db.getSiblingDB('logging')
+
 	db = mgo.Database{
 		Session: session,
 		Name:    "logging",
 	}
-	//db.createUser({ user: "logging",
-	//pwd: "password",
-	//roles: [
-	//{ role: "readWrite", db: "logging" }
-	//]
-	//});
+
 	err = db.UpsertUser(&mgo.User{
 		Username: "logging",
 		Password: "password",
@@ -503,9 +348,9 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-	//db.createCollection("logEntry");
+
 	logEntry := mgo.Collection{
 		Database: &db,
 		Name:     "logEntry",
@@ -513,8 +358,6 @@ func main() {
 	}
 	err = logEntry.Create(&mgo.CollectionInfo{})
 	if err != nil {
-		println("Error during execution: " + err.Error())
+		LoggingClient.Error("Error during execution: " + err.Error())
 	}
-
-	session.Close()
 }

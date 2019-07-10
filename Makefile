@@ -13,3 +13,12 @@ test:
 	$(GO) vet ./...
 	gofmt -l .
 	[ "`gofmt -l .`" = "" ]
+
+build:
+	$(GO) build -o main .
+
+run:
+	./main
+
+clean:
+	rm -f main
